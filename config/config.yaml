@@ -1,0 +1,15 @@
+server:
+  port: "8080"
+  readTimeout: 10s
+  writeTimeout: 10s
+
+mysql:
+  dsn: "root:root@tcp(127.0.0.1:3306)/nft_auction?charset=utf8mb4&parseTime=True&loc=Local"
+  maxOpenConns: 100
+  maxIdleConns: 20
+  connMaxLifetime: 30m
+
+blockchain:
+  rpcEndpoint: "https://goerli.infura.io/v3/your-infura-key" # 测试网RPC
+  contractAddress: "0x1234567890abcdef1234567890abcdef12345678" # 你的合约地址
+  privateKey: "your-backend-private-key" # 需加密存储
