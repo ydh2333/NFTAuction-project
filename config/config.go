@@ -41,8 +41,8 @@ type BlockchainConfig struct {
 func LoadConfig() *Config {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".") // 从当前目录查找配置文件
-	viper.AutomaticEnv()     // 优先读取环境变量
+	viper.AddConfigPath("./config") // 从config目录查找配置文件
+	viper.AutomaticEnv()            // 优先读取环境变量
 
 	// 环境变量映射
 	viper.BindEnv("server.port", "SERVER_PORT")

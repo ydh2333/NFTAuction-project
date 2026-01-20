@@ -10,6 +10,7 @@ mysql:
   connMaxLifetime: 30m
 
 blockchain:
-  rpcEndpoint: "https://goerli.infura.io/v3/your-infura-key" # 测试网RPC
-  contractAddress: "0x1234567890abcdef1234567890abcdef12345678" # 你的合约地址
-  privateKey: "your-backend-private-key" # 需加密存储
+  rpcEndpoint: "https://ethereum-sepolia-rpc.publicnode.com" # 测试网RPC
+  contractAddress: "0x0E5Cd5E3fe2541E2563090FC99f0Ba282353dC2A" # NFT合约地址
+  privateKey: "d71a701e75b49c9a337ac20bacf15ccf62b92b86fee94cb6f5bc0240453f4f64" # 加密存储
+  
