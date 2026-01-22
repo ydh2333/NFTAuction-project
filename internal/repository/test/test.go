@@ -16,7 +16,7 @@ func main() {
 	repository.InitDB(&cfg.MySQL)
 
 	nft := &models.NFT{
-		TokenID:         "1",
+		TokenID:         1,
 		ContractAddress: "0x123",
 		OwnerAddress:    "0x456",
 		Name:            "NFT",

@@ -8,7 +8,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/ydh2333/NFTAuction-project/config"
-	"github.com/ydh2333/NFTAuction-project/internal/blockchain"
+	"github.com/ydh2333/NFTAuction-project/internal/blockchain/ERC721"
+	"github.com/ydh2333/NFTAuction-project/internal/blockchain/NFTAuction"
 	"github.com/ydh2333/NFTAuction-project/internal/repository"
 	"github.com/ydh2333/NFTAuction-project/utils/logger"
 )
@@ -23,21 +24,37 @@ func main() {
 	// 3. 初始化数据库
 	repository.InitDB(&cfg.MySQL)
 
-	// 4. 初始化区块链监听器
-	listener, err := blockchain.NewListener(&cfg.Blockchain)
+	// 创建全局上下文,统一管理所有监听器
+	ctx, cancel := context.WithCancel(context.Background())
+	// 确保程序退出时执行cancel，且只执行一次
+	defer func() {
+		cancel()
+		log.Info().Msg("全局上下文已关闭，所有监听器停止")
+	}()
+
+	// 初始化erc721SafeMint监听器
+	erc721Listener, err := ERC721.NewERC721Listener(&cfg.Blockchain)
 	if err != nil {
-		// logger.Log.Fatal().Err(err).Msg("初始化区块链监听器失败")
+		log.Fatal().Err(err).Msg("初始化监听器失败")
+	}
+
+	// 启动ERC721监听器（后台协程，避免阻塞主线程）
+	go func() {
+		log.Info().Msg("启动ERC721 safeMint监听器")
+		if err := erc721Listener.StartListeningSafeMint(ctx); err != nil {
+			log.Error().Err(err).Msg("监听safeMint失败")
+		}
+	}()
+
+	// 初始化auction链监听器
+	auctionListener, err := NFTAuction.NewListener(&cfg.Blockchain)
+	if err != nil {
 		log.Error().Err(err).Msg("初始化区块链监听器失败")
 	}
 
-	// 5. 启动监听器（后台协程）
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	go func() {
-		log.Info().Msg("listener start")
-		if err := listener.Start(ctx); err != nil {
-			// logger.Log.Fatal().Err(err).Msg("区块链监听器退出")
+		log.Info().Msg("启动NFTAuction监听器")
+		if err := auctionListener.Start(ctx); err != nil {
 			log.Error().Err(err).Msg("区块链监听器退出")
 		}
 	}()
