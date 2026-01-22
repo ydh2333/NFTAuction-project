@@ -32,9 +32,12 @@ type MySQLConfig struct {
 
 // BlockchainConfig 区块链配置
 type BlockchainConfig struct {
-	RPCEndpoint     string // 区块链节点RPC地址
-	ContractAddress string // 已部署的拍卖合约地址
-	PrivateKey      string // 后端操作合约的私钥
+	RPCEndpoint   string        // 区块链节点RPC地址
+	WSRpcEndpoint string        // 区块链节点WebSocket RPC地址
+	ContractAddr  string        // 已部署的拍卖合约地址
+	PrivateKey    string        // 后端操作合约的私钥
+	StartBlock    uint64        // 起始块号
+	PollInterval  time.Duration // 区块轮询间隔
 }
 
 // LoadConfig 加载配置

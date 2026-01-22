@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 // AuctionStatus 拍卖状态
@@ -13,12 +11,14 @@ const (
 	AuctionStatusPending   AuctionStatus = "pending"   // 未开始
 	AuctionStatusActive    AuctionStatus = "active"    // 进行中
 	AuctionStatusEnded     AuctionStatus = "ended"     // 已结束
-	AuctionStatusCancelled AuctionStatus = "cancelled" // 已取消，暂不涉及
+	AuctionStatusCancelled AuctionStatus = "cancelled" // 已取消
 )
 
 // Auction 拍卖信息
 type Auction struct {
-	gorm.Model
+	ID      uint64 `gorm:"primarykey" json:"id"`
+	OptTime time.Time
+
 	CreatorAddress    string        `gorm:"not null" json:"creator_address"`          // 拍卖创建者钱包地址
 	Duration          time.Duration `gorm:"not null" json:"duration"`                 // 拍卖持续时间
 	StartTime         time.Time     `gorm:"not null" json:"start_time"`               // 拍卖开始时间
@@ -30,6 +30,6 @@ type Auction struct {
 	HighestBid        uint64        `gorm:"not null;default:0" json:"highest_bid"`    // 当前最高价
 	TokenAddress      string        `gorm:"not null" json:"token_address"`            // 拍卖货币类型
 	NFTID             uint          `gorm:"not null;index" json:"nft_id"`             // 关联NFT的ID
-	NFT               NFT           `gorm:"foreignKey:NFTID" json:"nft"`              // 关联NFT详情
+	NFTContract       string        `gorm:"not null" json:"nft_contract"`             // NFT合约地址
 
 }

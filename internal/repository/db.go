@@ -31,7 +31,7 @@ func InitDB(cfg *config.MySQLConfig) {
 	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
 	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
-	// 自动迁移表结构（生产环境建议手动执行SQL）
+	// 自动迁移表结构
 	err = DB.AutoMigrate(
 		&models.NFT{},
 		&models.Auction{},

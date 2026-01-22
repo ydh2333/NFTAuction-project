@@ -3,6 +3,7 @@ package repository
 import (
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/ydh2333/NFTAuction-project/internal/models"
 	"gorm.io/gorm"
@@ -13,7 +14,7 @@ type AuctionRepository interface {
 	GetByID(id uint) (*models.Auction, error)
 	GetActiveAuctions() ([]*models.Auction, error)
 	UpdateStatus(id uint, status models.AuctionStatus) error
-	UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder uint) error
+	UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder common.Address) error
 }
 
 // auctionRepository 实现AuctionRepository
@@ -72,7 +73,7 @@ func (r *auctionRepository) UpdateStatus(id uint, status models.AuctionStatus) e
 }
 
 // UpdateCurrentPrice 更新拍卖当前最高价
-func (r *auctionRepository) UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder uint) error {
+func (r *auctionRepository) UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder common.Address) error {
 	if err := r.db.Model(&models.Auction{}).
 		Where("id = ?", auctionID).
 		Updates(map[string]interface{}{
