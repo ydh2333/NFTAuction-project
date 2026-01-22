@@ -1,48 +1,55 @@
 package main
 
 import (
-	"math/big"
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
-
 	"github.com/ydh2333/NFTAuction-project/config"
 	"github.com/ydh2333/NFTAuction-project/internal/blockchain"
+	"github.com/ydh2333/NFTAuction-project/internal/repository"
 	"github.com/ydh2333/NFTAuction-project/utils/logger"
 )
 
 func main() {
-	logger.InitLogger()
+	// 1. 初始化配置
 	cfg := config.LoadConfig()
 
-	blockchainClient, err := blockchain.NewAuctionContract(&cfg.Blockchain)
+	// 2. 初始化日志
+	logger.InitLogger()
+
+	// 3. 初始化数据库
+	repository.InitDB(&cfg.MySQL)
+
+	// 4. 初始化区块链监听器
+	listener, err := blockchain.NewListener(&cfg.Blockchain)
 	if err != nil {
-		log.Fatal().Err(err).Msg("创建合约实例失败")
-		return
+		// logger.Log.Fatal().Err(err).Msg("初始化区块链监听器失败")
+		log.Error().Err(err).Msg("初始化区块链监听器失败")
 	}
 
-	// tx, err := blockchainClient.CreateAuction(
-	// 	common.HexToAddress("0x51ccc58ae0a621b78196cce2e01920dd6e5be38b"),
-	// 	big.NewInt(100000),
-	// 	big.NewInt(100),
-	// 	common.HexToAddress("0x8174da3510e4C0373db82b92AB7949AfF75e7C25"),
-	// 	big.NewInt(3),
-	// )
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("创建拍卖失败")
-	// 	return
-	// }
-	// log.Info().Str("txHash", tx).Msg("创建拍卖成功")
+	// 5. 启动监听器（后台协程）
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	tx, err := blockchainClient.PlaceBid(
-		big.NewInt(1),
-		big.NewInt(10000),
-		common.HexToAddress("0x0000000000000000000000000000000000000000"),
-		"d71a701e75b49c9a337ac20bacf15ccf62b92b86fee94cb6f5bc0240453f4f64",
-	)
-	if err != nil {
-		log.Fatal().Err(err).Msg("竞拍失败")
-		return
-	}
-	log.Info().Str("txHash", tx).Msg("竞拍成功")
+	go func() {
+		log.Info().Msg("listener start")
+		if err := listener.Start(ctx); err != nil {
+			// logger.Log.Fatal().Err(err).Msg("区块链监听器退出")
+			log.Error().Err(err).Msg("区块链监听器退出")
+		}
+	}()
+
+	// 9. 监听退出信号（Ctrl+C、kill）
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Info().Msg("开始关闭服务...")
+
+	// 10. 优雅关闭
+	cancel() // 停止监听器
+	log.Info().Msg("服务已关闭")
+
 }

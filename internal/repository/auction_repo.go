@@ -3,7 +3,6 @@ package repository
 import (
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/ydh2333/NFTAuction-project/internal/models"
 	"gorm.io/gorm"
@@ -14,7 +13,7 @@ type AuctionRepository interface {
 	GetByID(id uint) (*models.Auction, error)
 	GetActiveAuctions() ([]*models.Auction, error)
 	UpdateStatus(id uint, status models.AuctionStatus) error
-	UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder common.Address) error
+	UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder string, TokenAddress string) error
 }
 
 // auctionRepository 实现AuctionRepository
@@ -25,6 +24,10 @@ type auctionRepository struct {
 // NewAuctionRepository 创建拍卖仓库实例
 func NewAuctionRepository() AuctionRepository {
 	return &auctionRepository{db: DB}
+}
+
+func NewAuctionRepositoryWithTx(tx *gorm.DB) AuctionRepository {
+	return &auctionRepository{db: tx}
 }
 
 // Create 创建拍卖记录
@@ -73,12 +76,13 @@ func (r *auctionRepository) UpdateStatus(id uint, status models.AuctionStatus) e
 }
 
 // UpdateCurrentPrice 更新拍卖当前最高价
-func (r *auctionRepository) UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder common.Address) error {
+func (r *auctionRepository) UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder string, TokenAddress string) error {
 	if err := r.db.Model(&models.Auction{}).
 		Where("id = ?", auctionID).
 		Updates(map[string]interface{}{
 			"highest_bid":    HighestBid,
 			"highest_bidder": HighestBidder,
+			"token_address":  TokenAddress,
 		}).Error; err != nil {
 		log.Error().Err(err).Uint("auction_id", auctionID).Msg("更新拍卖当前价失败")
 		return err

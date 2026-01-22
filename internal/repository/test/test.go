@@ -34,7 +34,7 @@ func main() {
 		StartPrice:        100,
 		StartTokenAddress: "0x456",
 		Status:            models.AuctionStatusPending,
-		HighestBidder:     nil,
+		HighestBidder:     "",
 		HighestBid:        0,
 		TokenAddress:      "0x789",
 		NFTID:             1,

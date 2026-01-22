@@ -21,6 +21,10 @@ func NewBidRepository() BidRepository {
 	return &bidRepository{db: DB}
 }
 
+func NewBidRepositoryWithTx(tx *gorm.DB) BidRepository {
+	return &bidRepository{db: tx}
+}
+
 // Create 创建竞拍记录
 func (r *bidRepository) Create(bid *models.Bid) error {
 	if err := r.db.Create(bid).Error; err != nil {

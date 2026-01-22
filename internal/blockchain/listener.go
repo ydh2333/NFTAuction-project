@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/rs/zerolog/log"
 	"github.com/ydh2333/NFTAuction-project/config"
 	"github.com/ydh2333/NFTAuction-project/utils/logger"
 	"golang.org/x/sync/errgroup"
@@ -25,7 +26,7 @@ type Listener struct {
 // 初始化监听器
 func NewListener(cfg *config.BlockchainConfig) (*Listener, error) {
 	// 连接以太坊RPC
-	client, err := ethclient.Dial(cfg.RPCEndpoint)
+	client, err := ethclient.Dial(cfg.WSRpcEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +36,12 @@ func NewListener(cfg *config.BlockchainConfig) (*Listener, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &Listener{
 		client:       client,
 		abi:          parsedABI,
 		contractAddr: common.HexToAddress(cfg.ContractAddr),
 		startBlock:   cfg.StartBlock,
-		pollInterval: int64(cfg.PollInterval.Seconds()),
+		pollInterval: int64(cfg.PollInterval),
 	}, nil
 }
 
@@ -52,15 +52,15 @@ func (l *Listener) Start(ctx context.Context) error {
 
 	// 2. 启动3个事件监听协程（AuctionCreated/BidPlaced/AuctionEnded）
 	eg.Go(func() error {
-		return l.listenEvent(ctx, "AuctionCreated", l.handleAuctionCreated)
+		return l.listenEvent(ctx, "CreateAuction", l.handleAuctionCreated)
 	})
 
 	eg.Go(func() error {
-		return l.listenEvent(ctx, "BidPlaced", l.handleBidPlaced)
+		return l.listenEvent(ctx, "PlaceBid", l.handleBidPlaced)
 	})
 
 	eg.Go(func() error {
-		return l.listenEvent(ctx, "AuctionEnded", l.handleAuctionEnded)
+		return l.listenEvent(ctx, "EndAuction", l.handleAuctionEnded)
 	})
 
 	// 3. 启动拍卖过期检查协程（兜底逻辑）
@@ -77,7 +77,7 @@ func (l *Listener) Start(ctx context.Context) error {
 func (l *Listener) listenEvent(ctx context.Context, eventName string, handler func(log types.Log) error) error {
 	event := l.abi.Events[eventName]
 	if event.ID == (common.Hash{}) {
-		logger.Log.Error().Str("event", eventName).Msg("事件不存在")
+		log.Error().Str("event", eventName).Msg("事件不存在")
 		return logger.NewErrorf("事件%s不存在", eventName)
 	}
 
@@ -90,28 +90,34 @@ func (l *Listener) listenEvent(ctx context.Context, eventName string, handler fu
 	logs := make(chan types.Log)
 	sub, err := l.client.SubscribeFilterLogs(ctx, query, logs)
 	if err != nil {
+		log.Error().Err(err).Str("event", eventName).Msg("订阅事件失败")
 		return logger.WrapError(err, "订阅事件%s失败", eventName)
 	}
 	defer sub.Unsubscribe()
 
-	logger.Log.Info().Str("event", eventName).Msg("开始监听事件")
+	// logger.Log.Info().Str("event", eventName).Msg("开始监听事件")
+	log.Info().Str("event", eventName).Msg("开始监听事件")
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case err := <-sub.Err():
-			logger.Log.Error().Err(err).Str("event", eventName).Msg("事件订阅出错，重试中...")
+			// logger.Log.Error().Err(err).Str("event", eventName).Msg("事件订阅出错，重试中...")
+			log.Error().Err(err).Str("event", eventName).Msg("事件订阅出错，重试中...")
 			// 重试订阅
 			sub.Unsubscribe()
 			sub, err = l.client.SubscribeFilterLogs(ctx, query, logs)
 			if err != nil {
+				log.Error().Err(err).Str("event", eventName).Msg("重试订阅事件失败")
 				return logger.WrapError(err, "重试订阅事件%s失败", eventName)
 			}
-		case log := <-logs:
-			logger.Log.Debug().Str("event", eventName).Str("tx_hash", log.TxHash.Hex()).Msg("收到事件")
-			if err := handler(log); err != nil {
-				logger.Log.Error().Err(err).Str("event", eventName).Str("tx_hash", log.TxHash.Hex()).Msg("处理事件失败")
+		case log1 := <-logs:
+			// logger.Log.Debug().Str("event", eventName).Str("tx_hash", log.TxHash.Hex()).Msg("收到事件")
+			log.Info().Str("event", eventName).Str("tx_hash", log1.TxHash.Hex()).Msg("收到事件")
+			if err := handler(log1); err != nil {
+				log.Error().Err(err).Str("event", eventName).Str("tx_hash", log1.TxHash.Hex()).Msg("处理事件失败")
+				// logger.Log.Error().Err(err).Str("event", eventName).Str("tx_hash", log.TxHash.Hex()).Msg("处理事件失败")
 			}
 		}
 	}
