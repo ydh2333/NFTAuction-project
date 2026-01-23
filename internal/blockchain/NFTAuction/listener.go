@@ -103,7 +103,6 @@ func (l *Listener) listenEvent(ctx context.Context, eventName string, handler fu
 		case <-ctx.Done():
 			return ctx.Err()
 		case err := <-sub.Err():
-			// logger.Log.Error().Err(err).Str("event", eventName).Msg("事件订阅出错，重试中...")
 			log.Error().Err(err).Str("event", eventName).Msg("事件订阅出错，重试中...")
 			// 重试订阅
 			sub.Unsubscribe()
@@ -113,11 +112,9 @@ func (l *Listener) listenEvent(ctx context.Context, eventName string, handler fu
 				return logger.WrapError(err, "重试订阅事件%s失败", eventName)
 			}
 		case log1 := <-logs:
-			// logger.Log.Debug().Str("event", eventName).Str("tx_hash", log.TxHash.Hex()).Msg("收到事件")
 			log.Info().Str("event", eventName).Str("tx_hash", log1.TxHash.Hex()).Msg("收到事件")
 			if err := handler(log1); err != nil {
 				log.Error().Err(err).Str("event", eventName).Str("tx_hash", log1.TxHash.Hex()).Msg("处理事件失败")
-				// logger.Log.Error().Err(err).Str("event", eventName).Str("tx_hash", log.TxHash.Hex()).Msg("处理事件失败")
 			}
 		}
 	}

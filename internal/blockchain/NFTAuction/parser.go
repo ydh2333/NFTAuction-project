@@ -46,7 +46,7 @@ func (l *Listener) handleAuctionCreated(log types.Log) error {
 		StartTime:         time.Unix(int64(event.StartTime.Uint64()), 0),
 		EndTime:           time.Unix(int64(EndTime.Uint64()), 0),
 		NFTContract:       event.NftContract.Hex(),
-		NFTID:             uint(event.NftId.Uint64()),
+		NFTTokenID:        uint(event.NftId.Uint64()),
 		OptTime:           time.Unix(int64(event.OptTime.Uint64()), 0),
 	}
 

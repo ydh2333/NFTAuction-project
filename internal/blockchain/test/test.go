@@ -49,7 +49,7 @@ func main() {
 	// 初始化auction链监听器
 	auctionListener, err := NFTAuction.NewListener(&cfg.Blockchain)
 	if err != nil {
-		log.Error().Err(err).Msg("初始化区块链监听器失败")
+		log.Fatal().Err(err).Msg("初始化区块链监听器失败")
 	}
 
 	go func() {
