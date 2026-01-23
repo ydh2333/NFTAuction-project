@@ -179,6 +179,7 @@ type AuctionDetail struct {
 	ImageURL   string
 	Name       string
 	TokenID    string
+	StartTime  time.Time
 	EndTime    time.Time
 	HighestBid uint64
 	StartPrice float64
@@ -191,7 +192,7 @@ func (r *auctionRepository) SearchAuctions(params AuctionSearchParams, sortParam
 	err := r.db.Table("auctions").
 		Joins("JOIN nfts ON nfts.token_id = auctions.nft_token_id").
 		Scopes(SearchAuctions(params), SortAuctions(sortParams), utils.Paginate(pageParams)).
-		Select("nfts.image_url, nfts.name, nfts.token_id, auctions.end_time, auctions.highest_bid, auctions.start_price, auctions.status").
+		Select("nfts.image_url, nfts.name, nfts.token_id, auctions.start_time, auctions.end_time, auctions.highest_bid, auctions.start_price, auctions.status").
 		Scan(&AuctionDetails).Error
 
 	if err != nil {
