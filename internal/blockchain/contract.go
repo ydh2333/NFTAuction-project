@@ -18,8 +18,7 @@ import (
 	"github.com/ydh2333/NFTAuction-project/config"
 )
 
-// 创建拍卖和竞价采用前端直接与链交互，不再使用后端代创建
-
+// 创建拍卖、竞价和结束拍卖采用前端直接与链交互，不再使用后端代创建
 // AuctionContract 拍卖合约实例
 type AuctionContract struct {
 	client     *ethclient.Client // 区块链客户端
@@ -29,7 +28,7 @@ type AuctionContract struct {
 	chainID    *big.Int          // 链ID
 }
 
-// 替换为你的合约ABI（从Solidity编译后获取）
+// 拍卖合约ABI
 const auctionABI = `[
 	{
 		"inputs": [
