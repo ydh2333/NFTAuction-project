@@ -43,3 +43,22 @@ func InitDB(cfg *config.MySQLConfig) {
 
 	log.Info().Msg("数据库连接成功")
 }
+
+// CloseDB 关闭数据库连接池
+// 该方法应在程序退出前调用，优雅释放数据库连接资源
+func CloseDB() {
+	if DB == nil {
+		log.Warn().Msg("数据库连接实例为空，无需关闭")
+		return
+	}
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Error().Err(err).Msg("获取数据库连接池失败，关闭操作终止")
+		return
+	}
+	if err := sqlDB.Close(); err != nil {
+		log.Error().Err(err).Msg("关闭数据库连接池失败")
+	} else {
+		log.Info().Msg("数据库连接池已成功关闭")
+	}
+}

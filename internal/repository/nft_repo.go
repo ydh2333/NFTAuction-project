@@ -52,7 +52,7 @@ type NftDetail struct {
 func (r *nftRepository) GetNFTByOwnerAddress(OwnerAddress string) ([]NftDetail, error) {
 	var nftDetails []NftDetail
 	err := r.db.Table("nfts").
-		Joins("JOIN auctions ON nfts.token_id = auctions.nft_token_id").
+		Joins("LEFT JOIN auctions ON nfts.token_id = auctions.nft_token_id").
 		Where("nfts.owner_address = ?", OwnerAddress).
 		Select("nfts.image_url, nfts.name, nfts.token_id, auctions.start_price, auctions.status").
 		Scan(&nftDetails).Error

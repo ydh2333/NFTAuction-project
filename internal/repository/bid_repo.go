@@ -57,7 +57,7 @@ func (r *bidRepository) GetHighestBidByAuctionID(auctionID uint) (*models.Bid, e
 
 // MarkWinningBid 标记获胜竞拍，拍卖结束时更新
 func (r *bidRepository) MarkWinningBid(bidID uint) error {
-	if err := r.db.Model(&models.Bid{}).Where("id = ?", bidID).Update("is_winning", true).Error; err != nil {
+	if err := r.db.Model(&models.Bid{}).Where("auction_id = ?", bidID).Update("is_winning", true).Error; err != nil {
 		log.Error().Err(err).Msg("标记获胜竞拍失败")
 		return err
 	}

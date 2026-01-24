@@ -16,5 +16,5 @@ blockchain:
   ERC721ContractAddr: "0x8174da3510e4C0373db82b92AB7949AfF75e7C25"
   privateKey: "" # 加密存储
   StartBlock: 1000000
-  PollInterval: 30
+  PollInterval: 20
   

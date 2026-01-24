@@ -120,8 +120,8 @@ func (l *Listener) handleAuctionEnded(log types.Log) error {
 		OptTime      *big.Int
 	}
 
-	if err := l.abi.UnpackIntoInterface(&event, "AuctionEnded", log.Data); err != nil {
-		return logger.WrapError(err, "解析AuctionEnded事件失败")
+	if err := l.abi.UnpackIntoInterface(&event, "EndAuction", log.Data); err != nil {
+		return logger.WrapError(err, "解析EndAuction事件失败")
 	}
 
 	event.AuctionId = new(big.Int).SetBytes(log.Topics[1].Bytes())

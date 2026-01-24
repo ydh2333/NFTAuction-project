@@ -162,7 +162,7 @@ func SortAuctions(params SortParams) func(tx *gorm.DB) *gorm.DB {
 		}
 
 		// 默认排序，按照起始价格降序
-		if params.Field == "" && allowedFields[params.Field] {
+		if params.Field == "" || allowedFields[params.Field] {
 			params.Field = "start_price"
 			params.Dir = "desc"
 		}
@@ -184,6 +184,7 @@ type AuctionDetail struct {
 	HighestBid uint64
 	StartPrice float64
 	Status     models.AuctionStatus
+	AuctionID  uint64
 }
 
 func (r *auctionRepository) SearchAuctions(params AuctionSearchParams, sortParams SortParams, pageParams utils.PageParams) ([]AuctionDetail, error) {
@@ -192,7 +193,7 @@ func (r *auctionRepository) SearchAuctions(params AuctionSearchParams, sortParam
 	err := r.db.Table("auctions").
 		Joins("JOIN nfts ON nfts.token_id = auctions.nft_token_id").
 		Scopes(SearchAuctions(params), SortAuctions(sortParams), utils.Paginate(pageParams)).
-		Select("nfts.image_url, nfts.name, nfts.token_id, auctions.start_time, auctions.end_time, auctions.highest_bid, auctions.start_price, auctions.status").
+		Select("nfts.image_url, nfts.name, nfts.token_id, auctions.start_time, auctions.end_time, auctions.highest_bid, auctions.start_price, auctions.status, auctions.id AS AuctionID").
 		Scan(&AuctionDetails).Error
 
 	if err != nil {
