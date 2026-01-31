@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/rs/zerolog/log"
 
+	"github.com/ydh2333/NFTAuction-project/internal/redis"
 	"github.com/ydh2333/NFTAuction-project/internal/repository"
 	"github.com/ydh2333/NFTAuction-project/utils"
 )
@@ -14,6 +15,7 @@ type HomePageService interface {
 		sortParams repository.SortParams,
 		pageParams utils.PageParams,
 	) ([]repository.AuctionDetail, error)
+	GetTop5HotAuctions() ([]repository.AuctionDetail, error)
 }
 
 type homePageService struct {
@@ -48,4 +50,23 @@ func (h *homePageService) SearchAuctionsList(
 	pageParams utils.PageParams,
 ) ([]repository.AuctionDetail, error) {
 	return h.auctionRepo.SearchAuctions(params, sortParams, pageParams)
+}
+
+func (h *homePageService) GetTop5HotAuctions() ([]repository.AuctionDetail, error) {
+	// 1. 从redis中获取热门拍卖ID
+	auctionIDs, err := redis.GetTop5HotAuctions()
+	if err != nil {
+		log.Error().Err(err).Msg("获取热门拍卖ID失败")
+		return nil, err
+	}
+
+	// 2. 根据热门拍卖ID获取拍卖详情
+	auctionRepo := repository.NewAuctionRepository()
+	auctionDetails, err := auctionRepo.GetAuctionsByIDs(auctionIDs)
+	if err != nil {
+		log.Error().Err(err).Msg("获取热门拍卖失败")
+		return nil, err
+	}
+
+	return auctionDetails, nil
 }

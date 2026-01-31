@@ -13,6 +13,7 @@ type Config struct {
 	Server     ServerConfig
 	MySQL      MySQLConfig
 	Blockchain BlockchainConfig
+	Redis      RedisConfig
 }
 
 // ServerConfig 服务配置
@@ -28,6 +29,14 @@ type MySQLConfig struct {
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
+}
+
+// RedisConfig Redis配置
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+	PoolSize int
 }
 
 // BlockchainConfig 区块链配置

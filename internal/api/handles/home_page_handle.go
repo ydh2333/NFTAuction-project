@@ -50,3 +50,12 @@ func (h *HomePageHandler) SearchAuctionsList(c *gin.Context) {
 
 	utils.SendSuccess(c, "搜索拍卖成功", AuctionDetails)
 }
+
+func (h *HomePageHandler) GetTop5HotAuctions(c *gin.Context) {
+	auctionDetails, err := h.homePageService.GetTop5HotAuctions()
+	if err != nil {
+		utils.SendError(c, 500, "获取热门拍卖失败")
+		return
+	}
+	utils.SendSuccess(c, "获取热门拍卖成功", auctionDetails)
+}

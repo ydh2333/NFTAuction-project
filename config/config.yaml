@@ -18,3 +18,8 @@ blockchain:
   StartBlock: 1000000
   PollInterval: 20
   
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+  poolSize: 20

@@ -12,6 +12,7 @@ type BidRepository interface {
 	GetHighestBidByAuctionID(auctionID uint) (*models.Bid, error)
 	MarkWinningBid(bidID uint) error
 	GetBidCount() (int64, error)
+	GetBidAll() ([]models.Bid, error)
 }
 
 type bidRepository struct {
@@ -72,4 +73,14 @@ func (r *bidRepository) GetBidCount() (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+// GetBidAll 获取所有出价记录
+func (r *bidRepository) GetBidAll() ([]models.Bid, error) {
+	var bids []models.Bid
+	if err := r.db.Find(&bids).Error; err != nil {
+		log.Error().Err(err).Msg("获取所有出价记录失败")
+		return nil, err
+	}
+	return bids, nil
 }

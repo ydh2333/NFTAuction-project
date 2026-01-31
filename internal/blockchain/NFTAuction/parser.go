@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 	"github.com/ydh2333/NFTAuction-project/internal/models"
+	"github.com/ydh2333/NFTAuction-project/internal/redis"
 	"github.com/ydh2333/NFTAuction-project/internal/repository"
 	"github.com/ydh2333/NFTAuction-project/utils/logger"
 )
@@ -106,6 +107,16 @@ func (l *Listener) handleBidPlaced(log types.Log) error {
 		return logger.WrapError(err, "提交事务失败")
 	}
 
+	// 3. 出价成功，更新redis拍卖热度
+	// 采用异步执行，不阻塞拍卖服务，同时也让出价事件处理更快
+	go func() {
+		if err := redis.IncrAuctionHot(bid.AuctionID); err != nil {
+			logger.Log.Error().Err(err).Msg("增加拍卖热度失败")
+		} else {
+			logger.Log.Info().Uint64("auction_id", bid.AuctionID).Msg("增加拍卖热度成功")
+		}
+	}()
+
 	logger.Log.Info().Uint64("auction_id", bid.AuctionID).Str("bidder", bid.BidderAddress).Msg("同步出价事件成功")
 	return nil
 }
@@ -147,6 +158,11 @@ func (l *Listener) handleAuctionEnded(log types.Log) error {
 	// 所有操作成功，提交事务
 	if err := tx.Commit().Error; err != nil {
 		return logger.WrapError(err, "提交事务失败")
+	}
+
+	// 拍卖结束，从热度排行中删除拍卖
+	if err := redis.DelAuctionHot(uint64(auctionID)); err != nil {
+		logger.Log.Error().Err(err).Msg("从热度排行中删除拍卖失败")
 	}
 
 	logger.Log.Info().Uint64("auction_id", uint64(auctionID)).Str("status", string(auctionStatus)).Msg("同步拍卖结束事件成功")

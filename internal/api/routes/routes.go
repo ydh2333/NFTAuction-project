@@ -20,6 +20,7 @@ func InitRoutes(r *gin.Engine) {
 		{
 			homePage.GET("/platformStatistics", homePageHandler.PlatformStatistics)
 			homePage.POST("/auctionList", homePageHandler.SearchAuctionsList)
+			homePage.GET("/top5HotAuctions", homePageHandler.GetTop5HotAuctions)
 		}
 		// 拍卖详情页面
 		auctionDetailHandler := handles.NewAuctionDetailHandler()

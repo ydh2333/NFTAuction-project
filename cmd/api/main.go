@@ -13,6 +13,8 @@ import (
 	"github.com/ydh2333/NFTAuction-project/internal/api/routes"
 	"github.com/ydh2333/NFTAuction-project/internal/blockchain/ERC721"
 	"github.com/ydh2333/NFTAuction-project/internal/blockchain/NFTAuction"
+	"github.com/ydh2333/NFTAuction-project/internal/models"
+	"github.com/ydh2333/NFTAuction-project/internal/redis"
 	"github.com/ydh2333/NFTAuction-project/internal/repository"
 	"github.com/ydh2333/NFTAuction-project/utils/logger"
 )
@@ -26,6 +28,22 @@ func main() {
 
 	// 3. 初始化数据库
 	repository.InitDB(&cfg.MySQL)
+
+	// 4. 初始化redis
+	redis.Init(&cfg.Redis)
+
+	// 5. 初始化热度排行，从Mysql中获取
+	var bids []models.Bid
+	bids, err := repository.NewBidRepository().GetBidAll()
+	if err != nil {
+		log.Error().Err(err).Msg("获取所有出价记录失败")
+		return
+	}
+	if err := redis.InitHotRankFromDB(bids); err != nil {
+		log.Error().Err(err).Msg("初始化Redis热度排行失败")
+		return
+	}
+	log.Info().Msg("初始化Redis热度排行成功")
 
 	// 4. 创建全局上下文,统一管理所有监听器
 	ctx, cancel := context.WithCancel(context.Background())
@@ -90,6 +108,8 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Info().Msg("开始关闭服务...")
+
+	redis.CloseRedis()
 
 	// 11. 优雅关闭
 	srv.Shutdown(ctx)    // 关闭HTTP服务

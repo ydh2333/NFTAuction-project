@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -17,6 +19,7 @@ type AuctionRepository interface {
 	UpdateCurrentPrice(auctionID uint, HighestBid uint64, HighestBidder string, TokenAddress string) error
 	GetAuctionCount() (int64, error)
 	SearchAuctions(params AuctionSearchParams, sortParams SortParams, pageParams utils.PageParams) ([]AuctionDetail, error)
+	GetAuctionsByIDs(auctionIDs []uint64) ([]AuctionDetail, error)
 }
 
 // auctionRepository 实现AuctionRepository
@@ -182,7 +185,7 @@ type AuctionDetail struct {
 	StartTime  time.Time
 	EndTime    time.Time
 	HighestBid uint64
-	StartPrice float64
+	StartPrice uint64
 	Status     models.AuctionStatus
 	AuctionID  uint64
 }
@@ -202,4 +205,52 @@ func (r *auctionRepository) SearchAuctions(params AuctionSearchParams, sortParam
 	}
 
 	return AuctionDetails, nil
+}
+
+// GetAuctionsByIDs 根据拍卖ID获取拍卖，且保持顺序
+func (r *auctionRepository) GetAuctionsByIDs(auctionIDs []uint64) ([]AuctionDetail, error) {
+	var auctions []*models.Auction
+	if err := r.db.Where("id IN (?)", auctionIDs).Find(&auctions).Error; err != nil {
+		log.Error().Err(err).Msg("获取拍卖失败")
+		return nil, err
+	}
+
+	var AuctionDetails []AuctionDetail
+
+	nftRepository := NewNFTRepository()
+	for auctionID := range auctionIDs {
+		index := getIndex(auctions, uint64(auctionID))
+		if index == -1 {
+			return nil, errors.New("无效的拍卖ID")
+		}
+
+		nft, err := nftRepository.GetNFTByTokenID(auctions[index].NFTTokenID)
+		if err != nil {
+			log.Error().Err(err).Msg("获取NFT失败")
+			return nil, err
+		}
+
+		AuctionDetails = append(AuctionDetails, AuctionDetail{
+			ImageURL:   nft.ImageURL,
+			Name:       nft.Name,
+			TokenID:    fmt.Sprint(auctions[index].NFTTokenID),
+			StartTime:  auctions[index].StartTime,
+			EndTime:    auctions[index].EndTime,
+			HighestBid: auctions[index].HighestBid,
+			StartPrice: auctions[index].StartPrice,
+			Status:     auctions[index].Status,
+			AuctionID:  uint64(auctions[index].ID),
+		})
+
+	}
+	return AuctionDetails, nil
+}
+
+func getIndex(auctions []*models.Auction, ID uint64) int64 {
+	for i, v := range auctions {
+		if v.ID == ID {
+			return int64(i)
+		}
+	}
+	return -1
 }
